@@ -105,11 +105,6 @@ int main(int argc, char **argv)
 	gai_hints.ai_protocol = IPPROTO_TCP;
 
 /*** TO BE DONE END ***/
-	if (gai_rv=getaddrinfo(argv[1], argv[2], &gai_hints, &server_addrinfo)) {
-		if(gai_rv==EAI_SYSTEM)
-			fail_errno("Failed to get Pong Server address in binary form");
-		fail(gai_strerror(gai_rv));
-	}
 
     /*** call getaddrinfo() in order to get Pong Server address in binary form ***/
 /*** TO BE DONE START ***/
