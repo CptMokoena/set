@@ -51,6 +51,7 @@ void tcp_pong(int message_no, size_t message_size, FILE *in_stream, int out_sock
                 /*** get time-stamp time2 from the clock ***/
 /*** TO BE DONE START ***/
 
+		clock_gettime(CLOCK_TYPE, &time2);
 
 /*** TO BE DONE END ***/
 
@@ -64,6 +65,7 @@ void tcp_pong(int message_no, size_t message_size, FILE *in_stream, int out_sock
                 /*** get time-stamp time3 from the clock ***/
 /*** TO BE DONE START ***/
 
+		clock_gettime(CLOCK_TYPE, &time3);
 
 /*** TO BE DONE END ***/
 
@@ -93,6 +95,7 @@ void udp_pong(int dgrams_no, int dgram_sz, int pong_socket)
                 /*** get time-stamp time2 from the clock ***/
 /*** TO BE DONE START ***/
 
+		clock_gettime(CLOCK_TYPE, &time2);
 
 /*** TO BE DONE END ***/
 
@@ -128,6 +131,7 @@ void udp_pong(int dgrams_no, int dgram_sz, int pong_socket)
                 /*** get time-stamp time3 from the clock ***/
 /*** TO BE DONE START ***/
 
+		clock_gettime(CLOCK_TYPE, &time3);
 
 /*** TO BE DONE END ***/
 
@@ -163,6 +167,24 @@ int open_udp_socket(int *pong_port)
 
                 /*** create DGRAM socket, call getaddrinfo() to set port number, and bind() ***/
 /*** TO BE DONE START ***/
+
+		if (gai_rv=getaddrinfo(NULL, port_number_as_str, &gai_hints, &pong_addrinfo)) {
+			if(gai_rv==EAI_SYSTEM)
+				fail_errno("Failed to get addr info of server");
+			fail(gai_strerror(gai_rv));
+		}
+
+		//creating the socket
+		udp_socket = socket(gai_hints.ai_family, gai_hints.ai_socktype, gai_hints.ai_protocol); 
+		if(udp_socket < 0)
+			fail_errno("Failed to create udp socket");
+
+		//binding the socket to the port
+		bind_rv = bind(udp_socket, pong_addrinfo->ai_addr, pong_addrinfo->ai_addrlen);    
+		if (bind_rv == 0) {
+			*pong_port = port_number;
+			return udp_socket;
+		}
 
 
 /*** TO BE DONE END ***/
@@ -289,6 +311,16 @@ void server_loop(int server_socket) {
      establised fork() and have the child process call serve_client() ***/
 /*** TO BE DONE START ***/
 
+		if (request_socket == -1) {
+			if (errno == EINTR)
+				continue;
+			close(server_socket);
+			fail_errno("Pong server could not accept client connection");
+		}
+		if ((pid = fork()) < 0)
+			fail_errno("Pong Server could not fork");
+		if (pid == 0) 
+			serve_client(request_socket, &client_addr);
 
 /*** TO BE DONE END ***/
 
@@ -313,6 +345,24 @@ int main(int argc, char **argv)
         /*** call getaddrinfo() to setup port number and server address, ***
          *** create STREAM socket, bind() and listen()                   ***/
 /*** TO BE DONE START ***/
+
+	if (gai_rv=getaddrinfo(NULL, argv[1], &gai_hints, &server_addrinfo)) {
+		if(gai_rv==EAI_SYSTEM)
+			fail_errno("Failed to get addr info of server");
+		fail(gai_strerror(gai_rv));
+	}
+
+	//creating the socket
+	server_socket = socket(gai_hints.ai_family, gai_hints.ai_socktype, gai_hints.ai_protocol);
+	if(server_socket < 0)
+		fail_errno("Failed to create udp socket");
+
+	//binding the socket to the port
+	if (bind(server_socket,server_addrinfo->ai_addr,server_addrinfo->ai_addrlen) == -1)
+		fail_errno("Server could not bind the socket");
+
+	if(listen(server_socket, 10) == -1)
+		fail_errno("Error while listening server_socket\n");
 
 
 /*** TO BE DONE END ***/
